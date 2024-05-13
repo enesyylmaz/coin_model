@@ -1,14 +1,21 @@
-# Use the official Tensorflow Serving image
-FROM tensorflow/serving
+# Use the official lightweight Python image.
+# https://hub.docker.com/_/python
+FROM python:3.9-slim
 
-# Copy the model folder to the container
-COPY ./coin_model /models/coin_model
+# Allow statements and log messages to immediately appear in the Knative logs
+ENV PYTHONUNBUFFERED True
 
-# Set the environment variable pointing to the model
-ENV MODEL_NAME=coin_model
+# Install production dependencies.
+RUN pip install Flask requests
 
-# Expose port 8501
-EXPOSE 8501
+# Copy local code to the container image.
+ENV APP_HOME /app
+WORKDIR $APP_HOME
+COPY . .
 
-# Start Tensorflow Serving
-CMD ["tensorflow_model_server", "--port=8501", "--model_name=${MODEL_NAME}", "--model_base_path=/models/${MODEL_NAME}"]
+# Service must listen to $PORT environment variable.
+# This default value facilitates local development.
+ENV PORT 8080
+
+# Run the web service on container startup.
+CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 app:app
