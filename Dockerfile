@@ -1,20 +1,14 @@
-# Use an official Python runtime as a parent image
-FROM python:3.7-slim
+# Use the official Tensorflow Serving image
+FROM tensorflow/serving
 
-# Set the working directory in the container
-WORKDIR /app
+# Copy the model folder to the container
+COPY ./coin_model /models/coin_model
 
-# Copy the current directory contents into the container at /app
-COPY . /app
+# Set the environment variable pointing to the model
+ENV MODEL_NAME=coin_model
 
-# Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+# Expose port 8501
+EXPOSE 8501
 
-# Make port 80 available to the world outside this container
-EXPOSE 80
-
-# Define environment variable
-ENV NAME World
-
-# Run app.py when the container launches
-CMD ["python", "app.py"]
+# Start Tensorflow Serving
+CMD ["tensorflow_model_server", "--port=8501", "--model_name=${MODEL_NAME}", "--model_base_path=/models/${MODEL_NAME}"]
